@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Top Gainers Today - Super Stox{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
+        <div>
+            <h1 style="margin-bottom:8px;">Top Gainers Today</h1>
+            <p class="muted" style="margin:0;">
+                A live view of the strongest-performing stocks in today’s tracked market list.
+            </p>
+        </div>
+        <a href="{{ url_for('screener') }}" class="btn">Open Screener</a>
+    </div>
+
+    {% if stocks %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Ticker</th>
+                        <th>Company</th>
+                        <th>Price</th>
+                        <th>Change</th>
+                        <th>Change %</th>
+                        <th>Market Cap</th>
+                        <th>Sector</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stock in stocks %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>
+                            <strong>{{ stock.ticker }}</strong>
+                        </td>
+                        <td>{{ stock.name }}</td>
+                        <td>${{ "%.2f"|format(stock.current_price or 0) }}</td>
+                        <td class="{{ 'green' if (stock.change or 0) >= 0 else 'red' }}">
+                            {{ "%.2f"|format(stock.change or 0) }}
+                        </td>
+                        <td class="{{ 'green' if (stock.change_percent or 0) >= 0 else 'red' }}">
+                            {{ "%.2f"|format(stock.change_percent or 0) }}%
+                        </td>
+                        <td>
+                            {% if stock.market_cap %}
+                                ${{ "{:,.0f}".format(stock.market_cap) }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td>{{ stock.sector or 'Unknown' }}</td>
+                        <td>
+                            <a href="{{ url_for('stock_detail', ticker=stock.ticker) }}" class="btn btn-secondary">
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="muted">No market data is available right now.</p>
+    {% endif %}
+</div>
+{% endblock %}

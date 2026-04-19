@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width: 400px; margin: 50px auto;">
+    <h2 style="text-align: center; margin-bottom: 25px;">Create Account</h2>
+    <form method="POST" style="display: flex; flex-direction: column; align-items: center;">
+        <div style="margin-bottom: 20px; width: 100%;">
+            <label style="display: block; margin-bottom: 8px; text-align: center;">Username</label>
+            <input type="text" name="username" required style="width: 100%; padding: 10px; box-sizing: border-box; text-align: center; font-size: 16px;">
+        </div>
+        <div style="margin-bottom: 20px; width: 100%;">
+            <label style="display: block; margin-bottom: 8px; text-align: center;">Email</label>
+            <input type="email" name="email" required style="width: 100%; padding: 10px; box-sizing: border-box; text-align: center; font-size: 16px;">
+        </div>
+        <div style="margin-bottom: 25px; width: 100%;">
+            <label style="display: block; margin-bottom: 8px; text-align: center;">Password (min 6 chars)</label>
+            <input type="password" name="password" required minlength="6" style="width: 100%; padding: 10px; box-sizing: border-box; text-align: center; font-size: 16px;">
+        </div>
+        <button type="submit" class="btn" style="width: 100%; padding: 12px; font-weight: bold; cursor: pointer; margin: 0 auto;">
+            Register Account
+        </button>
+    </form>
+    <p style="text-align: center; margin-top: 20px;">
+        Already have an account? <a href="/login" style="color: #10b981;">Login here</a>
+    </p>
+</div>
+{% endblock %}

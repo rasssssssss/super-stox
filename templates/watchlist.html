@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>My Watchlist</h1>
+
+{% if stocks %}
+<div class="grid">
+    {% for stock in stocks %}
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div>
+                <h3>{{ stock.ticker }} <span class="badge">DEMO</span></h3>
+                <p style="color: #94a3b8; margin: 0; font-size: 0.9rem;">{{ stock.name }}</p>
+            </div>
+            <button onclick="removeItem('{{ stock.ticker }}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.5rem; padding: 0;">×</button>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div>
+                <p style="font-size: 1.8rem; font-weight: bold; margin: 0;">${{ "%.2f"|format(stock.current_price) }}</p>
+                <p class="{{ 'green' if stock.change_percent >= 0 else 'red' }}" style="margin: 5px 0 0 0;">
+                    {{ "%.2f"|format(stock.change_percent) }}%
+                </p>
+            </div>
+            <a href="/stock/{{ stock.ticker }}" class="btn" style="font-size: 0.9rem;">View Details</a>
+        </div>
+        
+        <!-- Mini Chart with Axis -->
+        <div style="height: 120px; margin-top: 10px;">
+            <canvas id="chart-{{ stock.ticker }}"></canvas>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+{% for stock in stocks %}
+    (function() {
+        const ctx = document.getElementById('chart-{{ stock.ticker }}').getContext('2d');
+        const history = {{ stock.history | tojson }};
+        const dates = history.dates.slice(-30);
+        const prices = history.prices.slice(-30);
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Price',
+                    data: prices,
+                    borderColor: '{{ '#10b981' if stock.change_percent >= 0 else '#ef4444' }}',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                return context[0].label;
+                            },
+                            label: function(context) {
+                                return '$' + context.parsed.y.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { 
+                        display: true,
+                        grid: { color: '#334155', drawBorder: false },
+                        ticks: { 
+                            color: '#64748b', 
+                            maxTicksLimit: 4,
+                            maxRotation: 0
+                        }
+                    },
+                    y: { 
+                        display: true,
+                        grid: { color: '#334155', drawBorder: false },
+                        ticks: { 
+                            color: '#64748b',
+                            callback: function(value) { return '$' + value.toFixed(0); }
+                        }
+                    }
+                }
+            }
+        });
+    })();
+{% endfor %}
+
+async function removeItem(ticker) {
+    if(confirm('Remove ' + ticker + ' from watchlist?')) {
+        await fetch('/api/watchlist/toggle', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ticker})
+        });
+        location.reload();
+    }
+}
+</script>
+
+{% else %}
+<div class="card" style="text-align: center; padding: 40px;">
+    <p>Your watchlist is empty</p>
+    <a href="/screener" class="btn" style="margin-top: 10px;">Browse Stocks</a>
+</div>
+{% endif %}
+{% endblock %}

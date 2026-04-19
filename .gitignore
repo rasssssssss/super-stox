@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+venv/
+.venv/
+backend/fastapi/.venv/
+
+instance/
+*.db
+
+backend/actix/target/

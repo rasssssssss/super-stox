@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Super Stox{% endblock %}</title>
+    <meta name="description" content="Super Stox stock screener and analytics platform">
+
+    <style>
+        :root {
+            --bg: #0b1120;
+            --surface: #121a2b;
+            --surface-2: #182235;
+            --border: #25324b;
+            --text: #ebf1ff;
+            --muted: #98a8c7;
+            --primary: #4f8cff;
+            --primary-hover: #3b78ea;
+            --green: #18c37e;
+            --red: #ff647b;
+            --yellow: #f2b84b;
+            --shadow-sm: 0 6px 18px rgba(0, 0, 0, 0.18);
+            --shadow-md: 0 14px 30px rgba(0, 0, 0, 0.22);
+            --radius: 14px;
+            --radius-sm: 10px;
+            --container: 1180px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: linear-gradient(180deg, #0b1120 0%, #0d1424 100%);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .container {
+            width: min(var(--container), calc(100% - 32px));
+            margin: 0 auto;
+        }
+
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(11, 17, 32, 0.88);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .nav-inner {
+            min-height: 70px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+        }
+
+        .brand-mark {
+            width: 36px;
+            height: 36px;
+            border-radius: 11px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, var(--primary), #79a8ff);
+            color: white;
+            font-weight: 900;
+            box-shadow: 0 8px 20px rgba(79, 140, 255, 0.28);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            padding: 10px 14px;
+            border-radius: 10px;
+            color: var(--muted);
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-links a.active {
+            color: var(--text);
+            background: rgba(79, 140, 255, 0.14);
+            border: 1px solid rgba(79, 140, 255, 0.18);
+        }
+
+        .page-header {
+            padding: 24px 0 10px;
+        }
+
+        .page-header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .page-title {
+            margin: 0;
+            font-size: clamp(1.4rem, 2.2vw, 2rem);
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+        }
+
+        .page-subtitle {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 0.98rem;
+        }
+
+        .page-tools {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        main {
+            padding: 12px 0 40px;
+        }
+
+        .content {
+            display: grid;
+            gap: 18px;
+        }
+
+        .card {
+            background: linear-gradient(180deg, var(--surface), var(--surface-2));
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card h1,
+        .card h2,
+        .card h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        .card p {
+            color: var(--muted);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .section-title {
+            margin: 0;
+            font-size: 1.02rem;
+            font-weight: 800;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 42px;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 11px;
+            background: var(--primary);
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-danger {
+            background: #8f2940;
+        }
+
+        .btn-danger:hover {
+            background: #7d2238;
+        }
+
+        form {
+            display: grid;
+            gap: 12px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            min-height: 44px;
+            padding: 11px 13px;
+            background: #0f1728;
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: #7f92b5;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 140, 255, 0.14);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            text-align: left;
+            padding: 13px 12px;
+            color: var(--muted);
+            font-size: 0.82rem;
+            font-weight: 800;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        tbody td {
+            padding: 13px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            vertical-align: middle;
+        }
+
+        tbody tr:hover {
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            background: rgba(79, 140, 255, 0.12);
+            color: #aecaFF;
+            border: 1px solid rgba(79, 140, 255, 0.2);
+        }
+
+        .green {
+            color: var(--green) !important;
+            font-weight: 700;
+        }
+
+        .red {
+            color: var(--red) !important;
+            font-weight: 700;
+        }
+
+        .yellow {
+            color: var(--yellow) !important;
+            font-weight: 700;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .flash-messages {
+            display: grid;
+            gap: 10px;
+        }
+
+        .flash {
+            border-radius: 12px;
+            padding: 13px 14px;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+
+        .flash-success {
+            background: rgba(24, 195, 126, 0.12);
+            color: #a0efcb;
+            border-color: rgba(24, 195, 126, 0.2);
+        }
+
+        .flash-error {
+            background: rgba(255, 100, 123, 0.12);
+            color: #ffbdc7;
+            border-color: rgba(255, 100, 123, 0.2);
+        }
+
+        .flash-info {
+            background: rgba(79, 140, 255, 0.12);
+            color: #bfd3ff;
+            border-color: rgba(79, 140, 255, 0.2);
+        }
+
+        .footer {
+            padding: 10px 0 30px;
+        }
+
+        .footer-note {
+            color: var(--muted);
+            font-size: 0.88rem;
+            line-height: 1.6;
+            text-align: center;
+            padding: 14px 18px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        @media (max-width: 900px) {
+            .grid-2,
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-inner {
+                padding: 12px 0;
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .nav-links {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                width: min(var(--container), calc(100% - 20px));
+            }
+
+            .card {
+                padding: 15px;
+            }
+
+            .nav-links a {
+                padding: 9px 11px;
+                font-size: 0.9rem;
+            }
+
+            thead th,
+            tbody td {
+                padding: 11px 10px;
+            }
+        }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <header class="navbar">
+        <div class="container nav-inner">
+            <a href="{{ url_for('index') }}" class="brand">
+                <span class="brand-mark">S</span>
+                <span>Super Stox</span>
+            </a>
+
+            <nav class="nav-links">
+                <a href="{{ url_for('index') }}">Dashboard</a>
+                <a href="{{ url_for('screener') }}">Screener</a>
+
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('watchlist') }}">Watchlist</a>
+                    <a href="{{ url_for('logout') }}">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}">Login</a>
+                    <a href="{{ url_for('register') }}">Register</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <section class="page-header">
+        <div class="container page-header-inner">
+            <div>
+                <h1 class="page-title">{% block page_title %}Market Dashboard{% endblock %}</h1>
+                <p class="page-subtitle">
+                    {% block page_subtitle %}
+                        Track stocks, screen opportunities, and review market data in one place.
+                    {% endblock %}
+                </p>
+            </div>
+
+            <div class="page-tools">
+                {% block page_actions %}{% endblock %}
+            </div>
+        </div>
+    </section>
+
+    <main>
+        <div class="container content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash flash-{{ category if category in ['success', 'error', 'info'] else 'info' }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-note">
+                Super Stox is an educational project and does not provide financial advice.
+                Market data may be delayed, estimated, or incomplete depending on the source.
+            </div>
+        </div>
+    </footer>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

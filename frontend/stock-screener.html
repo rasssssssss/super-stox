@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Super Stox Stock Screener</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root, [data-theme="light"] {
+      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+      --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
+      --space-6: 1.5rem; --space-8: 2rem; --space-12: 3rem; --space-16: 4rem;
+      --color-bg:#f7f6f2; --color-surface:#f9f8f5; --color-surface-2:#fbfbf9; --color-surface-offset:#f3f0ec;
+      --color-border:#d4d1ca; --color-divider:#dcd9d5; --color-text:#28251d; --color-text-muted:#6f6b63;
+      --color-primary:#01696f; --color-primary-hover:#0c4e54; --color-success:#437a22; --color-error:#a12c7b;
+      --radius-md:0.75rem; --radius-lg:1rem; --radius-full:9999px; --shadow-md:0 12px 32px rgba(0,0,0,.08);
+      --font-body:'Instrument Sans', sans-serif; --font-display:'Space Grotesk', sans-serif;
+    }
+    [data-theme="dark"] {
+      --color-bg:#171614; --color-surface:#1c1b19; --color-surface-2:#201f1d; --color-surface-offset:#1d1c1a;
+      --color-border:#393836; --color-divider:#262523; --color-text:#cdccca; --color-text-muted:#9a9894;
+      --color-primary:#4f98a3; --color-primary-hover:#227f8b; --color-success:#6daa45; --color-error:#d163a7;
+      --shadow-md:0 12px 32px rgba(0,0,0,.35);
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { min-height:100vh; font-family:var(--font-body); font-size:var(--text-base); background:var(--color-bg); color:var(--color-text); }
+    button,input,select { font:inherit; }
+    .app { display:grid; grid-template-columns:320px 1fr; min-height:100vh; }
+    .sidebar { background:var(--color-surface); border-right:1px solid var(--color-border); padding:var(--space-6); display:flex; flex-direction:column; gap:var(--space-6); }
+    .brand { display:flex; align-items:center; justify-content:space-between; gap:var(--space-4); }
+    .brand-mark { display:flex; align-items:center; gap:var(--space-3); font-family:var(--font-display); font-weight:700; }
+    .brand-mark svg { width:34px; height:34px; color:var(--color-primary); }
+    .theme-toggle { min-width:44px; min-height:44px; border:1px solid var(--color-border); border-radius:var(--radius-full); background:var(--color-surface-2); color:var(--color-text); }
+    .panel { background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-lg); padding:var(--space-4); box-shadow:var(--shadow-md); }
+    .panel h2 { font-size:var(--text-sm); text-transform:uppercase; letter-spacing:.08em; color:var(--color-text-muted); margin-bottom:var(--space-4); }
+    .filters { display:grid; gap:var(--space-4); }
+    .field { display:grid; gap:var(--space-2); }
+    .field label { font-size:var(--text-sm); font-weight:600; }
+    .field input, .field select { min-height:44px; padding:0.8rem 0.9rem; border-radius:var(--radius-md); border:1px solid var(--color-border); background:var(--color-bg); color:var(--color-text); }
+    .actions { display:flex; gap:var(--space-3); }
+    .btn { min-height:44px; padding:0.8rem 1rem; border-radius:var(--radius-full); border:1px solid var(--color-border); cursor:pointer; }
+    .btn-primary { background:var(--color-primary); color:white; border-color:transparent; }
+    .btn-primary:hover { background:var(--color-primary-hover); }
+    .content { padding:var(--space-6); display:grid; gap:var(--space-6); }
+    .hero { display:flex; justify-content:space-between; align-items:flex-start; gap:var(--space-6); }
+    .hero h1 { font-family:var(--font-display); font-size:var(--text-xl); margin-bottom:var(--space-2); }
+    .hero p { color:var(--color-text-muted); max-width:70ch; }
+    .status { display:flex; gap:var(--space-3); flex-wrap:wrap; }
+    .pill { padding:0.45rem 0.8rem; border-radius:var(--radius-full); background:var(--color-surface-offset); border:1px solid var(--color-border); font-size:var(--text-sm); }
+    .grid { display:grid; grid-template-columns:1.4fr 1fr; gap:var(--space-6); }
+    .results-table { width:100%; border-collapse:collapse; }
+    .results-table th, .results-table td { text-align:left; padding:0.9rem 0.7rem; border-bottom:1px solid var(--color-divider); }
+    .results-table th { font-size:var(--text-sm); color:var(--color-text-muted); }
+    .ticker-btn { color:var(--color-primary); font-weight:700; background:none; border:none; cursor:pointer; }
+    .pos { color:var(--color-success); }
+    .neg { color:var(--color-error); }
+    .watchlist { display:grid; gap:var(--space-3); }
+    .watch-item { display:flex; justify-content:space-between; align-items:center; padding:0.9rem; border:1px solid var(--color-border); border-radius:var(--radius-md); background:var(--color-surface); }
+    .chart-wrap { height:320px; }
+    .summary { line-height:1.7; color:var(--color-text-muted); }
+    .auth { display:grid; grid-template-columns:1fr 1fr; gap:var(--space-4); }
+    @media (max-width: 980px) { .app { grid-template-columns:1fr; } .grid { grid-template-columns:1fr; } .auth { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg viewBox="0 0 48 48" fill="none" aria-label="Super Stox logo"><path d="M7 32C13 25 18 24 23 16C26 11 30 8 38 8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M12 38H39" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><circle cx="38" cy="8" r="4" fill="currentColor"/></svg>
+          <span>Super Stox</span>
+        </div>
+        <button class="theme-toggle" data-theme-toggle aria-label="Switch theme">☾</button>
+      </div>
+
+      <section class="panel">
+        <h2>Filters</h2>
+        <form class="filters" id="filterForm">
+          <div class="field"><label for="query">Company or ticker</label><input id="query" placeholder="AAPL, Tesla, Microsoft"></div>
+          <div class="field"><label for="sector">Sector</label><select id="sector"><option value="">All sectors</option><option>Technology</option><option>Healthcare</option><option>Finance</option><option>Energy</option></select></div>
+          <div class="field"><label for="minPrice">Min price</label><input id="minPrice" type="number" placeholder="10"></div>
+          <div class="field"><label for="maxPrice">Max price</label><input id="maxPrice" type="number" placeholder="500"></div>
+          <div class="field"><label for="minCap">Min market cap</label><select id="minCap"><option value="">Any</option><option value="1000000000">1B+</option><option value="10000000000">10B+</option><option value="100000000000">100B+</option></select></div>
+          <div class="field"><label for="sortBy">Sort by</label><select id="sortBy"><option value="marketCap">Market cap</option><option value="price">Price</option><option value="changePercent">Daily change</option></select></div>
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Screen stocks</button>
+            <button class="btn" type="button" id="resetBtn">Reset</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Account</h2>
+        <div class="auth">
+          <button class="btn btn-primary" id="loginBtn">Login</button>
+          <button class="btn" id="registerBtn">Register</button>
+        </div>
+        <p style="margin-top:1rem;color:var(--color-text-muted);font-size:var(--text-sm);">Users can save watchlists and screener presets after authentication.</p>
+      </section>
+    </aside>
+
+    <main class="content">
+      <section class="hero">
+        <div>
+          <h1>Accessible stock screening with live market context</h1>
+          <p>Search, filter, chart, and review AI-generated plain-language summaries without turning the platform into financial advice.</p>
+        </div>
+        <div class="status">
+          <div class="pill">Live quotes</div>
+          <div class="pill">Historical charts</div>
+          <div class="pill">Watchlist</div>
+          <div class="pill">AI summaries</div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <h2>Results</h2>
+          <table class="results-table" id="resultsTable">
+            <thead>
+              <tr><th>Ticker</th><th>Company</th><th>Price</th><th>Daily</th><th>Market cap</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <h2>Watchlist</h2>
+          <div class="watchlist" id="watchlist"></div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <h2>Historical price</h2>
+          <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
+        </div>
+        <div class="panel">
+          <h2>AI market summary</h2>
+          <p class="summary" id="summaryBox">Select a stock to load price history, sector context, and a plain-language summary generated by the backend AI assistant.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const state = { watchlist: [], chart: null, theme: 'light' };
+    const tbody = document.querySelector('#resultsTable tbody');
+    const watchlist = document.getElementById('watchlist');
+    const summaryBox = document.getElementById('summaryBox');
+    const form = document.getElementById('filterForm');
+    const resetBtn = document.getElementById('resetBtn');
+    const themeToggle = document.querySelector('[data-theme-toggle]');
+    const doc = document.documentElement;
+
+    const mockRows = [
+      { ticker:'AAPL', company:'Apple Inc.', price:212.44, changePercent:1.84, marketCap:'3.1T' },
+      { ticker:'MSFT', company:'Microsoft Corp.', price:468.12, changePercent:0.91, marketCap:'3.5T' },
+      { ticker:'NVDA', company:'NVIDIA Corp.', price:1098.63, changePercent:-0.72, marketCap:'2.7T' },
+      { ticker:'TSLA', company:'Tesla Inc.', price:181.34, changePercent:2.61, marketCap:'577B' }
+    ];
+
+    const chartData = {
+      AAPL:[198,202,205,204,208,212], MSFT:[445,449,452,460,463,468], NVDA:[1120,1116,1108,1100,1090,1098], TSLA:[170,175,177,173,178,181]
+    };
+
+    function renderRows(rows) {
+      tbody.innerHTML = rows.map(row => `
+        <tr>
+          <td><button class="ticker-btn" data-ticker="${row.ticker}">${row.ticker}</button></td>
+          <td>${row.company}</td>
+          <td>$${row.price.toFixed(2)}</td>
+          <td class="${row.changePercent >= 0 ? 'pos' : 'neg'}">${row.changePercent >= 0 ? '+' : ''}${row.changePercent.toFixed(2)}%</td>
+          <td>${row.marketCap}</td>
+          <td><button class="btn" data-save="${row.ticker}">Save</button></td>
+        </tr>`).join('');
+    }
+
+    function renderWatchlist() {
+      watchlist.innerHTML = state.watchlist.length ? state.watchlist.map(t => `<div class="watch-item"><strong>${t}</strong><button class="btn" data-remove="${t}">Remove</button></div>`).join('') : '<p style="color:var(--color-text-muted)">No saved stocks yet.</p>';
+    }
+
+    function renderChart(ticker) {
+      const ctx = document.getElementById('priceChart');
+      if (state.chart) state.chart.destroy();
+      state.chart = new Chart(ctx, {
+        type:'line',
+        data:{ labels:['Mon','Tue','Wed','Thu','Fri','Now'], datasets:[{ label:`${ticker} price`, data:chartData[ticker] || [], borderColor:'#01696f', backgroundColor:'rgba(1,105,111,.12)', fill:true, tension:.35 }] },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ ticks:{ color:'#7a7974' } }, x:{ ticks:{ color:'#7a7974' } } } }
+      });
+    }
+
+    function updateSummary(ticker) {
+      summaryBox.textContent = `${ticker} is being visualised with recent price action, daily movement, and a simple natural-language explanation intended to help users understand context rather than give buy or sell advice.`;
+    }
+
+    form.addEventListener('submit', e => { e.preventDefault(); renderRows(mockRows); });
+    resetBtn.addEventListener('click', () => form.reset());
+    tbody.addEventListener('click', e => {
+      const ticker = e.target.dataset.ticker;
+      const save = e.target.dataset.save;
+      if (ticker) { renderChart(ticker); updateSummary(ticker); }
+      if (save && !state.watchlist.includes(save)) { state.watchlist.push(save); renderWatchlist(); }
+    });
+    watchlist.addEventListener('click', e => {
+      const remove = e.target.dataset.remove;
+      if (remove) { state.watchlist = state.watchlist.filter(t => t !== remove); renderWatchlist(); }
+    });
+    themeToggle.addEventListener('click', () => {
+      state.theme = state.theme === 'dark' ? 'light' : 'dark';
+      doc.setAttribute('data-theme', state.theme);
+      themeToggle.textContent = state.theme === 'dark' ? '☀' : '☾';
+    });
+
+    renderRows(mockRows);
+    renderWatchlist();
+    renderChart('AAPL');
+    updateSummary('AAPL');
+  </script>
+</body>
+</html>

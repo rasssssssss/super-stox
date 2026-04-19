@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card" style="margin-bottom: 20px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap;">
+        <div>
+            <h1 style="margin-bottom: 8px;">{{ stock.name }} ({{ stock.ticker }})</h1>
+            <p style="margin:0; color:#666;">
+                {{ stock.sector }}{% if stock.industry and stock.industry != 'Unknown' %} • {{ stock.industry }}{% endif %}
+            </p>
+            <p style="margin-top:8px; color:#666;">
+                {{ stock.exchange }} • {{ stock.currency }}
+            </p>
+        </div>
+
+        <div style="text-align:right;">
+            <div style="font-size: 2rem; font-weight: bold;">
+                ${{ "%.2f"|format(stock.current_price or 0) }}
+            </div>
+            <div class="{{ 'green' if (stock.change_percent or 0) >= 0 else 'red' }}" style="font-weight:600;">
+                {{ "%.2f"|format(stock.change or 0) }}
+                ({{ "%.2f"|format(stock.change_percent or 0) }}%)
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px; margin-bottom:20px;">
+    <div class="card">
+        <h2 style="margin-bottom: 15px;">Price Chart</h2>
+        <canvas id="priceChart" height="120"></canvas>
+    </div>
+
+    <div class="card">
+        <h2 style="margin-bottom: 15px;">Watchlist</h2>
+
+        {% if current_user.is_authenticated %}
+            <button id="watchlistBtn"
+                    class="btn"
+                    data-ticker="{{ stock.ticker }}"
+                    style="width:100%; margin-bottom: 10px;">
+                {% if in_watchlist %}Remove from Watchlist{% else %}Add to Watchlist{% endif %}
+            </button>
+            <p id="watchlistMessage" style="font-size: 0.9rem; color:#666;"></p>
+        {% else %}
+            <p style="margin-bottom: 10px;">Log in to save this stock to your watchlist.</p>
+            <a href="{{ url_for('login') }}" class="btn">Login</a>
+        {% endif %}
+
+        {% if stock.website %}
+        <div style="margin-top:15px;">
+            <a href="{{ stock.website }}" target="_blank" rel="noopener noreferrer" class="btn" style="display:inline-block;">
+                Company Website
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:20px; margin-bottom:20px;">
+    <div class="card">
+        <h3>Market Cap</h3>
+        <p>${{ "{:,.0f}".format(stock.market_cap or 0) }}</p>
+    </div>
+    <div class="card">
+        <h3>Volume</h3>
+        <p>{{ "{:,.0f}".format(stock.volume or 0) }}</p>
+    </div>
+    <div class="card">
+        <h3>Day Range</h3>
+        <p>${{ "%.2f"|format(stock.day_low or 0) }} - ${{ "%.2f"|format(stock.day_high or 0) }}</p>
+    </div>
+    <div class="card">
+        <h3>52 Week Range</h3>
+        <p>${{ "%.2f"|format(stock.week_52_low or 0) }} - ${{ "%.2f"|format(stock.week_52_high or 0) }}</p>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:20px; margin-bottom:20px;">
+    <div class="card">
+        <h3>P/E Ratio</h3>
+        <p>{{ "%.2f"|format(stock.trailing_pe or stock.pe_ratio or 0) }}</p>
+    </div>
+    <div class="card">
+        <h3>Forward P/E</h3>
+        <p>{{ "%.2f"|format(stock.forward_pe or 0) }}</p>
+    </div>
+    <div class="card">
+        <h3>P/B Ratio</h3>
+        <p>{{ "%.2f"|format(stock.price_to_book or 0) }}</p>
+    </div>
+    <div class="card">
+        <h3>P/S Ratio</h3>
+        <p>{{ "%.2f"|format(stock.price_to_sales or 0) }}</p>
+    </div>
+    <div class="card">
+        <h3>EV / EBITDA</h3>
+        <p>{{ "%.2f"|format(stock.enterprise_to_ebitda or 0) }}</p>
+    </div>
+    <div class="card">
+        <h3>PEG Ratio</h3>
+        <p>{{ "%.2f"|format(stock.peg_ratio or 0) }}</p>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:20px; margin-bottom:20px;">
+    <div class="card">
+        <h3>ROE</h3>
+        <p>{{ "%.2f"|format((stock.return_on_equity or 0) * 100) }}%</p>
+    </div>
+    <div class="card">
+        <h3>ROA</h3>
+        <p>{{ "%.2f"|format((stock.return_on_assets or 0) * 100) }}%</p>
+    </div>
+    <div class="card">
+        <h3>Operating Margin</h3>
+        <p>{{ "%.2f"|format((stock.operating_margin or 0) * 100) }}%</p>
+    </div>
+    <div class="card">
+        <h3>Profit Margin</h3>
+        <p>{{ "%.2f"|format((stock.profit_margin or 0) * 100) }}%</p>
+    </div>
+    <div class="card">
+        <h3>Gross Margin</h3>
+        <p>{{ "%.2f"|format((stock.gross_margin or 0) * 100) }}%</p>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:20px; margin-bottom:20px;">
+    <div class="card">
+        <h3>Debt to Equity</h3>
+        <p>{{ "%.2f"|format(stock.debt_to_equity or 0) }}</p>
+    </div>
+    <div class="card">
+        <h3>Current Ratio</h3>
+        <p>{{ "%.2f"|format(stock.current_ratio or 0) }}</p>
+    </div>
+    <div class="card">
+        <h3>Quick Ratio</h3>
+        <p>{{ "%.2f"|format(stock.quick_ratio or 0) }}</p>
+    </div>
+    <div class="card">
+        <h3>Dividend Yield</h3>
+        <p>{{ "%.2f"|format((stock.dividend_yield or 0) * 100) }}%</p>
+    </div>
+    <div class="card">
+        <h3>Payout Ratio</h3>
+        <p>{{ "%.2f"|format((stock.payout_ratio or 0) * 100) }}%</p>
+    </div>
+    <div class="card">
+        <h3>Beta</h3>
+        <p>{{ "%.2f"|format(stock.beta or 0) }}</p>
+    </div>
+</div>
+
+{% if stock.indicators %}
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:20px; margin-bottom:20px;">
+    <div class="card">
+        <h3>SMA 20</h3>
+        <p>{{ stock.indicators.get('sma20', 'N/A') }}</p>
+    </div>
+    <div class="card">
+        <h3>RSI 14</h3>
+        <p>{{ stock.indicators.get('rsi14', 'N/A') }}</p>
+    </div>
+</div>
+{% endif %}
+
+<div class="card" style="margin-bottom:20px;">
+    <h2 style="margin-bottom: 12px;">AI Summary</h2>
+    <p style="line-height:1.7;">
+        {{ analysis if analysis else "No AI summary available." }}
+    </p>
+</div>
+
+<div class="card">
+    <h2 style="margin-bottom: 12px;">Company Overview</h2>
+    <p style="line-height:1.7;">
+        {{ stock.description if stock.description else "No company description available." }}
+    </p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const historyData = {{ history|tojson }};
+
+    const labels = historyData.map(item => {
+        const d = new Date(item.date);
+        return d.toLocaleDateString();
+    });
+
+    const prices = historyData.map(item => item.close);
+
+    const ctx = document.getElementById('priceChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '{{ stock.ticker }} Price',
+                data: prices,
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                fill: true,
+                tension: 0.25,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        maxTicksLimit: 8
+                    }
+                },
+                y: {
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const watchlistBtn = document.getElementById('watchlistBtn');
+    const watchlistMessage = document.getElementById('watchlistMessage');
+
+    if (watchlistBtn) {
+        watchlistBtn.addEventListener('click', async function () {
+            const ticker = this.dataset.ticker;
+
+            try {
+                const response = await fetch('/api/watchlist/toggle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ ticker })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'added') {
+                    watchlistBtn.textContent = 'Remove from Watchlist';
+                    watchlistMessage.textContent = ticker + ' added to watchlist.';
+                } else if (data.status === 'removed') {
+                    watchlistBtn.textContent = 'Add to Watchlist';
+                    watchlistMessage.textContent = ticker + ' removed from watchlist.';
+                } else if (data.error) {
+                    watchlistMessage.textContent = data.error;
+                }
+            } catch (error) {
+                watchlistMessage.textContent = 'Failed to update watchlist.';
+            }
+        });
+    }
+</script>
+
+{% endblock %}
